@@ -3,7 +3,8 @@
 var React = require('react');
 var Router = require('react-router');
 var AuthorForm = require('./authorForm');
-var AuthorApi = require('../../api/AuthorApi');
+var AuthorActions = require('../../actions/authorActions');
+var AuthorStore = require('../../stores/authorStore');
 var Toastr = require('toastr');
 
 var ManageAuthorPage = React.createClass({
@@ -28,7 +29,7 @@ var ManageAuthorPage = React.createClass({
         var authorId = this.props.params.id;
 
         if(authorId) {
-            this.setState({author: AuthorApi.getAuthorById(authorId)});
+            this.setState({author: AuthorStore.getAuthorById(authorId)});
         }
     },
     authorFormIsValid: function() {
@@ -62,10 +63,22 @@ var ManageAuthorPage = React.createClass({
             return;
         }
 
-        AuthorApi.saveAuthor(this.state.author);
-        this.setState({dirty: false});
-        Toastr.success(this.state.author.firstName + ' ' + this.state.author.lastName + ' added.');
-        this.transitionTo('authors');
+        //Might be better to have a saveAuthor method that will handle new and updated authors instead of this approach
+        if(this.state.author.id) {
+            AuthorActions.updateAuthor(this.state.author);
+        }
+        else {
+            AuthorActions.createAuthor(this.state.author);
+        }
+
+
+
+        //Need to pass callback function as second parameter here in order for 'dirty' to have the lastest value when transitioning
+        this.setState({dirty: false}, function() {
+            Toastr.success(this.state.author.firstName + ' ' + this.state.author.lastName + ' added.');
+            this.transitionTo('authors');
+        });
+
     },
     render: function() {
         return (
